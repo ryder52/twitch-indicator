@@ -1,5 +1,10 @@
 #!/usr/bin/python
 
+import gi
+gi.require_version('Gtk', '3.0')
+gi.require_version('Notify', '0.7')
+gi.require_version('AppIndicator3', '0.1')
+
 from gi.repository import Gtk as gtk
 from gi.repository import GLib, Gio, GObject, Notify, GdkPixbuf, Gdk
 from gi.repository import AppIndicator3 as appindicator
@@ -82,6 +87,7 @@ class Twitch:
             'status': self.status,
             'image': stream['channel']['logo'],
             'pixbuf': self.loader,
+            'viewers': stream['viewers'],
             'url': "http://www.twitch.tv/%s" % stream['channel']['name']
           }
 
@@ -243,13 +249,10 @@ class Indicator():
     self.menuItems[2].set_submenu(self.streams_menu)
 
     # Order streams by alphabetical order
-    self.streams_ordered = sorted(streams, key=lambda k: k["name"].lower())
+    self.streams_ordered = sorted(streams, key=lambda k: k["viewers"], reverse=True)
 
     for index, stream in enumerate(self.streams_ordered):
-      self.icon=gtk.Image();
-      self.icon.set_from_pixbuf(stream['pixbuf'].get_pixbuf())
-      self.menu_entry = gtk.ImageMenuItem(stream['name']+' - '+stream['game'])
-      self.menu_entry.set_image(self.icon)
+      self.menu_entry = gtk.MenuItem(stream['name']+' ('+(str(stream['viewers']))+')')
       self.streams_menu.append(self.menu_entry)
       self.streams_menu.get_children()[index].connect('activate', self.open_link, stream["url"])
 
